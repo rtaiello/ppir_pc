@@ -9,10 +9,10 @@ from joint_computations.v1.ckks_v1 import CKKSv1
 # Returns R,t
 # R = 3x3 rotation matrix
 # t = 3x1 column vector
-clear = Clear()
-spdz = SPDZ()
-ckks = CKKSv1(dim_split_vectors=2, n_threads=-1)
-def rigid_transform_3D(A, B):
+
+def rigid_transform_3D(A, B, ppir):
+    print(A.shape)
+    print(B.shape)
     assert A.shape == B.shape
 
     num_rows, num_cols = A.shape
@@ -36,7 +36,7 @@ def rigid_transform_3D(A, B):
     Bm = B - centroid_B
 
     #H = Am @ np.transpose(Bm)
-    H = ckks.mat_mul(Am, Bm)
+    H = ppir.mat_mul(Am, Bm)
 
     
     # sanity check
@@ -54,8 +54,41 @@ def rigid_transform_3D(A, B):
         R = Vt.T @ U.T
 
     t = -R @ centroid_A + centroid_B
-    print(ckks.party_1_total_megabytes)
-    print(ckks.party_2_total_megabytes)
-    print(ckks.party_1_total_time)
-    print(ckks.party_2_total_time)
     return R, t
+
+
+def rigid_transform_2D(A, B, ppir):
+    assert A.shape == B.shape
+
+    num_rows, num_cols = A.shape
+    if num_rows != 2:
+        raise Exception(f"Matrix A is not 2xN, it is {num_rows}x{num_cols}")
+
+    num_rows, num_cols = B.shape
+    if num_rows != 2:
+        raise Exception(f"Matrix B is not 2xN, it is {num_rows}x{num_cols}")
+
+    # Find mean column-wise
+    centroid_A = np.mean(A, axis=1)
+    centroid_B = np.mean(B, axis=1)
+
+    # Ensure centroids are 2x1
+    centroid_A = centroid_A.reshape(-1, 1)
+    centroid_B = centroid_B.reshape(-1, 1)
+
+    # Subtract mean
+    Am = A - centroid_A
+    Bm = B - centroid_B
+
+    # Compute the transformation matrix H
+    H = ppir.mat_mul(Am, Bm)
+
+    # Singular Value Decomposition
+    U, S, Vt = np.linalg.svd(H)
+    R = Vt.T @ U.T
+
+    # Calculate translation
+    t = centroid_B - R @ centroid_A
+        
+    return R, t
+

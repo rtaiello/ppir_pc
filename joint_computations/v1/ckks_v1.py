@@ -39,10 +39,8 @@ class CKKSv1(AbstractJC):
                 [len(t.serialize()) for t in template_split_from_p2_enc]
             )
 
-            self._party_2_total_megabytes += template_enc_bytes
+            self._party_2_total_megabytes += template_enc_bytes 
             self._party_2_total_time += end - start
-            hydra.utils.log.info(f"src.joint_computations.ckks.ckks_v1.py - "
-                                 f"Party2 Enc Time: {end - start} (s) - Comm. : {template_enc_bytes/2**20} (MB)")
         serialized_context_from_p2 = self.party_2.get_serialized_context()
 
         start = time()
@@ -54,16 +52,12 @@ class CKKSv1(AbstractJC):
         end = time()
         self._party_1_total_time += end - start
         self._party_1_total_megabytes += len(result_one_side.serialize())
-        hydra.utils.log.info(f"src.joint_computations.ckks.v1.ckks_v1.py - "
-                             f"Party 1 sent encrypted result to Party 2 - "
-                             f"Time: {end - start} (s) - Comm.: {len(result_one_side.serialize())/2**20} (MB)")
+
         start = time()
         dec_result_one_side = self.party_2.dec_partial_res_from_p1(result_one_side)
         end = time()
         self._party_2_total_time += end - start
-        self._party_2_total_megabytes += dec_result_one_side.nbytes
-        hydra.utils.log.info(f"src.joint_computations.ckks.v1.ckks_v1.py - Party 2 decrypted result from Party 1 - "
-                             f"Time: {end - start} (s) - Comm.: {dec_result_one_side.nbytes/2**20} (MB)")
+        self._party_2_total_megabytes += dec_result_one_side.nbytes 
         return dec_result_one_side
     
 
